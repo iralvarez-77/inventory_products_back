@@ -14,33 +14,45 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 * `npx cdk synth`   emits the synthesized CloudFormation template
 
 
-# 📦 Documentación del Modelo de Datos - Amazon DynamoDB
+# 📦 Data Model Documentation - Amazon DynamoDB
 
-Este módulo utiliza **Amazon DynamoDB** para la persistencia de datos. Al ser una base de datos NoSQL, el diseño se enfoca en la eficiencia de las consultas directas mediante llaves únicas.
+This module uses Amazon DynamoDB for data persistence. As a NoSQL database, the design focuses on the efficiency of direct queries using unique keys.
 
-## 📊 Diseño de la Tabla: `Products`
+## 📊 Table Design: `Products`
 
-* **Tipo de Diseño:** Tabla Simple (Llave de Partición Única).
+* **Design Type:** Simple Table (Single Partition Key).
+
 * **Billing Mode:** On-Demand (Pay-per-request).
- 
-## 🔍 Patrones de Acceso (Access Patterns)
 
-Para este diseño simple, las operaciones de la aplicación están mapeadas de la siguiente forma:
+## 🔍 Access Patterns
 
-1. **Crear / Actualizar un producto:**
-   * **Operación:** `PutItem` / `UpdateItem`
-   * **Filtro:** Requiere `id`.
-2. **Obtener detalle de un producto:**
-   * **Operación:** `GetItem`
-   * **Filtro:** `id = "prod_7f3b2c9e"`
-3. **Eliminar un producto:**
-   * **Operación:** `DeleteItem`
-   * **Filtro:** Requiere `id`.
-<!-- 4. **Obtener todos los producto:**
-   * **Operación:** `DeleteItem`
-   * **Filtro:** Requiere `id`. -->
+For this simple design, the application operations are mapped as follows:
+
+1. **Create / Update a product:**
+
+* **Operation:** `PutItem` / `UpdateItem`
+
+* **Filter:** Requires `id`.
+
+* 2. **Get details of a product:**
+
+* **Operation:** `GetItem`
+
+* **Filter:** `id = "prod_7f3b2c9e"`
+
+3. **Delete a product:**
+
+* **Operation:** `DeleteItem`
+
+* **Filter:** Requires `id`.
+
+<!-- 4. **Get all products:**
+
+* **Operation:** `DeleteItem`
+
+* **Filter:** Requires `id`. -->
 
 ---
 
-## 🛠️ Archivo de Respaldo (NoSQL Workbench)
-El diseño visual e interactivo de este esquema se encuentra guardado en la carpeta `/docs/control_inventario_model.json` de este repositorio. Puede ser importado directamente en la herramienta **NoSQL Workbench para DynamoDB** para realizar simulaciones de datos.
+## 🛠️ Backup File (NoSQL Workbench)
+The visual and interactive design of this schema is saved in the `/docs/control_inventory_model.json` folder of this repository. It can be imported directly into the **NoSQL Workbench for DynamoDB** tool to perform data simulations.
