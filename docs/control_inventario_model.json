@@ -1,0 +1,124 @@
+{
+  "ModelName": "ControlInventarioModel",
+  "ModelMetadata": {
+    "Author": "IIAM",
+    "DateCreated": "Sep 11, 2026, 09:36 PM",
+    "DateLastModified": "Sep 11, 2026, 10:10 PM",
+    "Description": "Inventario multimoneda",
+    "AWSService": "Amazon DynamoDB",
+    "Version": "3.0"
+  },
+  "DataModel": [
+    {
+      "TableName": "Products",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "id",
+          "AttributeType": "S"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "nombre",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "costo_usd",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "margen_ganancia",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "precio_venta_usd",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "stock",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "stock_minimo",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "codigo_barras",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "ultima_actualizacion",
+          "AttributeType": "S"
+        }
+      ],
+      "TableData": [
+        {
+          "id": {
+            "S": "91ddd362-18b0-42ae-a2f3-ee8b1bc737ea"
+          },
+          "nombre": {
+            "S": "Harina Pan 1kg"
+          },
+          "costo_usd": {
+            "N": "1.10"
+          },
+          "margen_ganancia": {
+            "N": "30.0"
+          },
+          "precio_venta_usd": {
+            "N": "1.43"
+          },
+          "stock": {
+            "N": "45"
+          },
+          "stock_minimo": {
+            "N": "10"
+          },
+          "codigo_barras": {
+            "S": "7591031000132"
+          },
+          "ultima_actualizacion": {
+            "S": "2027-06-11T13:32:07.541Z"
+          }
+        }
+      ],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "SampleDataFormats": {
+        "id": [
+          "identifiers",
+          "UUID"
+        ],
+        "stock": [
+          "Int"
+        ],
+        "nombre": [
+          "dataTypes",
+          "String"
+        ],
+        "costo_usd": [
+          "Float"
+        ],
+        "margen_ganancia": [
+          "Float"
+        ],
+        "precio_venta_usd": [
+          "Float"
+        ],
+        "stock_minimo": [
+          "Int"
+        ],
+        "codigo_barras": [
+          "dataTypes",
+          "String"
+        ],
+        "ultima_actualizacion": [
+          "date",
+          "ISO 8601 date and time"
+        ]
+      },
+      "BillingMode": "PAY_PER_REQUEST"
+    }
+  ]
+}
