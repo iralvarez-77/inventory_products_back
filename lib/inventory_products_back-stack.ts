@@ -19,10 +19,10 @@ export class InventoryProductsBackStack extends cdk.Stack {
     });
 
     const configurationTable = new dynamo.Table(this, 'ConfigurationTable', {
-        tableName: 'Configuration',
+        tableName: 'ConfigTable',
         partitionKey: { 
           name: 'tasa_bcv_dia', 
-          type: dynamo.AttributeType.STRING 
+          type: dynamo.AttributeType.STRING
         },
         removalPolicy: cdk.RemovalPolicy.DESTROY, 
         billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
@@ -31,27 +31,27 @@ export class InventoryProductsBackStack extends cdk.Stack {
     const createProductFunction = new lambdaNodejs.NodejsFunction(this, 'CreateProductFunction', {
       runtime: lambda.Runtime.NODEJS_24_X,
       entry: 'lambda/create_product_function/index.ts',
-      handler: 'createProduct',
+      handler: 'createProductFunction',
       environment: {
         PRODUCTS_TABLE: productsTable.tableName,
+        CONFIG_TABLE: configurationTable.tableName,
       },
     });
 
-    const scraperFunction = new lambdaNodejs.NodejsFunction(this, 'ScraperFunction', {
-      runtime: lambda.Runtime.NODEJS_24_X,
-      entry: 'lambda/scraper_function/index.ts',
-      handler: 'scraperFunction',
-      environment: {
-        CONFIGURATION_TABLE: configurationTable.tableName,
-      },
-    });
+    // const scraperFunction = new lambdaNodejs.NodejsFunction(this, 'ScraperFunction', {
+    //   runtime: lambda.Runtime.NODEJS_24_X,
+    //   entry: 'lambda/scraper_function/index.ts',
+    //   handler: 'scraperFunction',
+    //   environment: {
+    //     CONFIGURATION_TABLE: configurationTable.tableName,
+    //   },
+    // });
 
     productsTable.grantWriteData(createProductFunction);
-    configurationTable.grantWriteData(scraperFunction);
+    configurationTable.grantReadData(createProductFunction);
+    //configurationTable.grantWriteData(scraperFunction);
 
     const inventoryAPI = new apigw.RestApi(this, 'InventoryApi');
-
-    // 5. Integrar API Gateway con la Lambda
     const integration = new apigw.LambdaIntegration(createProductFunction);
     const inventory = inventoryAPI.root.addResource('products');
     inventory.addMethod('POST', integration);

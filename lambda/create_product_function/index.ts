@@ -6,24 +6,15 @@ import {
   Context,
 } from "aws-lambda";
 import { randomUUID } from "crypto";
-import ProductService from "../../src/shared/product_service";
+import ProductService, { Product } from "../../src/shared/product_service";
+import { ConfigurationService } from "../../src/shared/configuration_service";
 
-const TABLE_NAME = process.env.PRODUCTS_TABLE ?? "";
-const productService = ProductService.getInstance(TABLE_NAME);
+const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
+const CONFIG_TABLE = process.env.CONFIG_TABLE ?? "";
 
-export interface Product {
-  id: string;                  // Partition Key
-  nombre: string;
-  costo_usd: number;
-  margen_ganancia: number;
-  precio_venta_usd: number;
-  precio_venta_ves: number;
-  stock: number;
-  stock_minimo: number;
-  codigo_barras?: string;      // Opcional
-  fecha_creacion: string;      // ISO String
-  ultima_actualizacion: string; // ISO String
-}
+const productService = new ProductService(PRODUCTS_TABLE);
+const configService = new ConfigurationService(CONFIG_TABLE);
+
 
 
 export const createProductFunction = async (
@@ -42,9 +33,15 @@ export const createProductFunction = async (
     const { nombre, costo_usd, margen_ganancia, stock, stock_minimo} = body;
     
     const precio_venta_usd = costo_usd * (1 + margen_ganancia / 100);
-    //Consultar tabla configuration en dynamo para obtener la tasa_bcv_dia 
-    const precio_venta_ves_raw = precio_venta_usd * 832.49; // tasa_bcv_día 
-    const precio_venta_ves = Math.round(precio_venta_ves_raw * 100) / 100;
+
+    const config = await configService.getConfig();
+    if (!config) 
+      return response(500, { message: "No se pudo recuperar la tasa de cambio" });
+    console.log('👀 👉🏽 ~  config:', config)
+    const { tasa_bcv } = config;
+    
+    const precio_venta_ves_raw = precio_venta_usd * tasa_bcv; // tasa_bcv_día 
+    const precio_venta_ves = Math.round(precio_venta_ves_raw * 100) / 100; // Redondear a 2 decimales
 
     const productItem: Product = {
       id: randomUUID(),
@@ -59,7 +56,7 @@ export const createProductFunction = async (
       fecha_creacion: new Date().toISOString(), // ISO String
       ultima_actualizacion: new Date().toISOString(), // ISO String
     };
-    await productService.createProduct<Product>(productItem);
+    await productService.createProduct(productItem);
 
     return response(201, { message: "Item guardado éxitosamente", productItem });
   } catch (error) {

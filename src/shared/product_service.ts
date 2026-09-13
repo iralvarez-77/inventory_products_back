@@ -7,34 +7,43 @@ import {
   PutCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 
-export class ProductService {
-  private static instance: ProductService | null = null;
-  private docClient: DynamoDBDocumentClient;
+export interface Product {
+  id: string;                  // Partition Key
+  nombre: string;
+  costo_usd: number;
+  margen_ganancia: number;
+  precio_venta_usd: number;
+  precio_venta_ves: number;
+  stock: number;
+  stock_minimo: number;
+  codigo_barras?: string;      // Opcional
+  fecha_creacion: string;      // ISO String
+  ultima_actualizacion: string; // ISO String
+}
 
-  private constructor(private tableName: string) {
+export class ProductService {
+  private docClient: DynamoDBDocumentClient;
+  private tableName: string;
+
+  constructor(tableName: string) {
     const client = new DynamoDBClient({});
     this.docClient = DynamoDBDocumentClient.from(client);
+    this.tableName = tableName;
   }
 
-  static getInstance(tableName: string): ProductService {
-    if (!ProductService.instance) {
-      if (!tableName) {
-        throw new Error("tableName is required to initialize ProductService");
-      }
-      ProductService.instance = new ProductService(tableName);
-    }
-    return ProductService.instance;
-  }
-
-  async createProduct<T extends Record<string, any>>(item: T): Promise<void> {
-    
+  async createProduct(item: Product): Promise<void> {
     const input: PutCommandInput = {
       TableName: this.tableName,
       Item: item,
     };
+    try {
+      await this.docClient.send(new PutCommand(input));
+    } catch (error) {
+      console.error("createProduct:", error);
+    }
 
-    await this.docClient.send(new PutCommand(input));
   }
 }
 
 export default ProductService;
+
