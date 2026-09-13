@@ -2,9 +2,8 @@ import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 import * as dynamo from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
-
-
 export class InventoryProductsBackStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -22,12 +21,22 @@ export class InventoryProductsBackStack extends cdk.Stack {
     const createProductFunction = new lambdaNodejs.NodejsFunction(this, 'CreateProductFunction', {
       runtime: lambda.Runtime.NODEJS_24_X,
       entry: 'lambda/create_product_function/index.ts',
-      handler: 'createProduct', // Solo el nombre de la función exportada
+      handler: 'createProduct',
       environment: {
         PRODUCTS_TABLE: productsTable.tableName,
       },
     });
 
     productsTable.grantWriteData(createProductFunction);
+
+    const inventoryAPI = new apigw.RestApi(this, 'InventoryApi');
+
+    // 5. Integrar API Gateway con la Lambda
+    const integration = new apigw.LambdaIntegration(createProductFunction);
+    const inventory = inventoryAPI.root.addResource('products');
+    inventory.addMethod('POST', integration);
+
+
+
   }
 }
