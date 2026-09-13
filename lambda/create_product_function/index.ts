@@ -15,8 +15,6 @@ const CONFIG_TABLE = process.env.CONFIG_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
 const configService = new ConfigurationService(CONFIG_TABLE);
 
-
-
 export const createProductFunction = async (
   event: APIGatewayProxyEvent,
   context: Context,

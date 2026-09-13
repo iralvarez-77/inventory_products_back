@@ -6,12 +6,6 @@ import {
   Context,
 } from "aws-lambda";
 import { randomUUID } from "crypto";
-import ProductService from "../../src/shared/product_service";
-
-//const TABLE_NAME = process.env.PRODUCTS_TABLE ?? "";
-//const productService = ProductService.getInstance(TABLE_NAME);
-
-
 
 export const scraperFunction = async (
   event: APIGatewayProxyEvent,
