@@ -1,17 +1,10 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 import * as dynamo from 'aws-cdk-lib/aws-dynamodb';
-export interface IProductInventory {
-  id: string;                  // Partition Key
-  nombre: string;
-  costo_usd: number;
-  margen_ganancia: number;
-  precio_venta_usd: number;
-  stock: number;
-  stock_minimo: number;
-  codigo_barras?: string;      // Opcional
-  ultima_actualizacion: string; // ISO String
-}
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+
+
 export class InventoryProductsBackStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -24,6 +17,17 @@ export class InventoryProductsBackStack extends cdk.Stack {
         },
         removalPolicy: cdk.RemovalPolicy.DESTROY, 
         billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
-      });
+    });
+
+    const createProductFunction = new lambdaNodejs.NodejsFunction(this, 'CreateProductFunction', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      entry: 'lambda/create_product_function/index.ts',
+      handler: 'createProduct', // Solo el nombre de la función exportada
+      environment: {
+        PRODUCTS_TABLE: productsTable.tableName,
+      },
+    });
+
+    productsTable.grantWriteData(createProductFunction);
   }
 }
