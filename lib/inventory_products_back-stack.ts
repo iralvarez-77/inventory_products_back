@@ -18,6 +18,16 @@ export class InventoryProductsBackStack extends cdk.Stack {
         billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
     });
 
+    const configurationTable = new dynamo.Table(this, 'ConfigurationTable', {
+        tableName: 'Configuration',
+        partitionKey: { 
+          name: 'tasa_bcv_dia', 
+          type: dynamo.AttributeType.STRING 
+        },
+        removalPolicy: cdk.RemovalPolicy.DESTROY, 
+        billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
+    });
+
     const createProductFunction = new lambdaNodejs.NodejsFunction(this, 'CreateProductFunction', {
       runtime: lambda.Runtime.NODEJS_24_X,
       entry: 'lambda/create_product_function/index.ts',

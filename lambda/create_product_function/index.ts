@@ -23,12 +23,6 @@ export interface Product {
   ultima_actualizacion: string; // ISO String
 }
 
-interface UserItem {
-  id: string;
-  name: string;
-  date: string;
-}
-
 export const createProduct = async (
   event: APIGatewayProxyEvent,
   context: Context,
@@ -41,21 +35,21 @@ export const createProduct = async (
     // if (!name)
     //   return response(400, { message: "La propiedad NAME es requerido" });
 
-    const productItem: Product = {
-      id: randomUUID(),
-      nombre: "Harina Pan 1kg",
-      costo_usd: 1.10,
-      margen_ganancia: 30.0,
-      precio_venta_usd: 1.43,
-      stock: 45,
-      stock_minimo: 10,
-      codigo_barras: "7591031000132",      // Opcional
-      ultima_actualizacion: new Date().toISOString(), // ISO String
-    };
+    // const productItem: Product = {
+    //   id: randomUUID(),
+    //   nombre: "Harina Pan 1kg",
+    //   costo_usd: 1.10,
+    //   margen_ganancia: 30.0,
+    //   precio_venta_usd: 1.43,
+    //   stock: 45,
+    //   stock_minimo: 10,
+    //   codigo_barras: "7591031000132",      // Opcional
+    //   ultima_actualizacion: new Date().toISOString(), // ISO String
+    // };
 
-    await productService.putItem<Product>(productItem);
+    //await productService.putItem<Product>(productItem);
 
-    return response(201, { message: "Item guardado éxitosamente", productItem });
+    //return response(201, { message: "Item guardado éxitosamente", productItem });
   } catch (error) {
     console.error("Error al guardar en DynamoDB:", error);
     const errorMessage =
