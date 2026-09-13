@@ -37,7 +37,17 @@ export class InventoryProductsBackStack extends cdk.Stack {
       },
     });
 
+    const scraperFunction = new lambdaNodejs.NodejsFunction(this, 'ScraperFunction', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      entry: 'lambda/scraper_function/index.ts',
+      handler: 'scraperFunction',
+      environment: {
+        CONFIGURATION_TABLE: configurationTable.tableName,
+      },
+    });
+
     productsTable.grantWriteData(createProductFunction);
+    configurationTable.grantWriteData(scraperFunction);
 
     const inventoryAPI = new apigw.RestApi(this, 'InventoryApi');
 

@@ -26,7 +26,7 @@ export interface Product {
 }
 
 
-export const createProduct = async (
+export const createProductFunction = async (
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
