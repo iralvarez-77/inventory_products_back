@@ -17,11 +17,14 @@ export interface Product {
   costo_usd: number;
   margen_ganancia: number;
   precio_venta_usd: number;
+  precio_venta_ves: number;
   stock: number;
   stock_minimo: number;
   codigo_barras?: string;      // Opcional
+  fecha_creacion: string;      // ISO String
   ultima_actualizacion: string; // ISO String
 }
+
 
 export const createProduct = async (
   event: APIGatewayProxyEvent,
@@ -29,27 +32,34 @@ export const createProduct = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log("👀 👉🏽 ~  context:", context);
   console.log("👀 👉🏽 ~  event:", event);
-  const name = event.queryStringParameters?.name;
+  const body = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
+  const { nombre, costo_usd, margen_ganancia, stock, stock_minimo} = body;
 
   try {
-    // if (!name)
-    //   return response(400, { message: "La propiedad NAME es requerido" });
+    if (!body)
+      return response(400, { message: "La propiedad NAME es requerido" });
+    
+    const precio_venta_usd = costo_usd * (1 + margen_ganancia / 100);
+    //Consultar tabla configuration en dynamo para obtener la tasa_bcv_dia 
+    const precio_venta_ves_raw = precio_venta_usd * 832.49; // tasa_bcv_día 
+    const precio_venta_ves = Math.round(precio_venta_ves_raw * 100) / 100;
 
-    // const productItem: Product = {
-    //   id: randomUUID(),
-    //   nombre: "Harina Pan 1kg",
-    //   costo_usd: 1.10,
-    //   margen_ganancia: 30.0,
-    //   precio_venta_usd: 1.43,
-    //   stock: 45,
-    //   stock_minimo: 10,
-    //   codigo_barras: "7591031000132",      // Opcional
-    //   ultima_actualizacion: new Date().toISOString(), // ISO String
-    // };
+    const productItem: Product = {
+      id: randomUUID(),
+      nombre,
+      costo_usd,
+      margen_ganancia,
+      precio_venta_usd,
+      precio_venta_ves,
+      stock,
+      stock_minimo,
+      codigo_barras: "7591031000132",      // Opcional
+      fecha_creacion: new Date().toISOString(), // ISO String
+      ultima_actualizacion: new Date().toISOString(), // ISO String
+    };
+    await productService.createProduct<Product>(productItem);
 
-    //await productService.putItem<Product>(productItem);
-
-    //return response(201, { message: "Item guardado éxitosamente", productItem });
+    return response(201, { message: "Item guardado éxitosamente", productItem });
   } catch (error) {
     console.error("Error al guardar en DynamoDB:", error);
     const errorMessage =

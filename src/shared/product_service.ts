@@ -26,7 +26,7 @@ export class ProductService {
     return ProductService.instance;
   }
 
-  async putItem<T extends Record<string, any>>(item: T): Promise<void> {
+  async createProduct<T extends Record<string, any>>(item: T): Promise<void> {
     
     const input: PutCommandInput = {
       TableName: this.tableName,
