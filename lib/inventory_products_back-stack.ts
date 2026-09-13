@@ -4,6 +4,8 @@ import * as dynamo from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 export class InventoryProductsBackStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -46,7 +48,13 @@ export class InventoryProductsBackStack extends cdk.Stack {
         CONFIG_TABLE: configurationTable.tableName,
       },
     });
-
+    
+    const cronRule = new events.Rule(this, 'CronEveryTwoHoursRule', {
+      schedule: events.Schedule.rate(cdk.Duration.hours(2)),
+    });
+    
+    cronRule.addTarget(new targets.LambdaFunction(scraperFunction));
+    
     productsTable.grantWriteData(createProductFunction);
     configurationTable.grantReadData(createProductFunction);
     configurationTable.grantWriteData(scraperFunction);

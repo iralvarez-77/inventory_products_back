@@ -13,8 +13,6 @@ export const scraperFunction = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log("👀 👉🏽 ~  context:", context);
   console.log("👀 👉🏽 ~  event:", event);
-
-
   
   try {
   

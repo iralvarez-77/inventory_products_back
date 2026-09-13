@@ -50,9 +50,9 @@ export class ConfigurationService {
 
     try {
       await this.docClient.send(command);
-      console.log(`✅ Tasa BCV actualizada con éxito a: ${nuevaTasa}`);
+      console.log(`Tasa BCV actualizada con éxito a: ${nuevaTasa}`);
     } catch (error) {
-      console.error("❌ Error al actualizar la tasa BCV en DynamoDB:", error);
+      console.error(" Error al actualizar la tasa BCV en DynamoDB:", error);
     }
   }
 }
