@@ -32,12 +32,14 @@ export const createProduct = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log("👀 👉🏽 ~  context:", context);
   console.log("👀 👉🏽 ~  event:", event);
-  const body = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
-  const { nombre, costo_usd, margen_ganancia, stock, stock_minimo} = body;
 
+  const body = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
+  
   try {
     if (!body)
-      return response(400, { message: "La propiedad NAME es requerido" });
+      return response(400, { message: "El cuerpo de la petición (body) es requerido" });
+
+    const { nombre, costo_usd, margen_ganancia, stock, stock_minimo} = body;
     
     const precio_venta_usd = costo_usd * (1 + margen_ganancia / 100);
     //Consultar tabla configuration en dynamo para obtener la tasa_bcv_dia 
