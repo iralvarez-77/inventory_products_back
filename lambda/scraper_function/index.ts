@@ -21,13 +21,14 @@ export const scraperFunction = async (
   try {
     const res = await fetch(URL);
     const data = (await res.json()) as DolarApiResponse;
+    const tasa_vcb = data.promedio;
     console.log('👀 👉🏽 ~  data:', data)
     
     if (!data) return response(404, { message: "No se encontraron datos" });
 
-    await configService.updateTasaBcv(data.promedio);
+    await configService.updateTasaBcv(tasa_vcb);
 
-    return response(200, { message: `Configuración actualizada con éxito`,  tasa_actualizada: data.promedio });
+    return response(200, { message: `Configuración actualizada con éxito`,  tasa_actualizada: tasa_vcb });
   } catch (error) {
     console.error("Error al guardar en DynamoDB:", error);
     const errorMessage =
