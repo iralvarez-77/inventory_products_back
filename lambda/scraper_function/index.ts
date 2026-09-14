@@ -5,7 +5,11 @@ import {
   APIGatewayProxyResult,
   Context,
 } from "aws-lambda";
-import { randomUUID } from "crypto";
+import { ConfigurationService, DolarApiResponse } from "../../src/shared/configuration_service";
+
+const URL = " https://ve.dolarapi.com/v1/dolares/oficial";
+const CONFIG_TABLE = process.env.CONFIG_TABLE ?? "";
+const configService = new ConfigurationService(CONFIG_TABLE);
 
 export const scraperFunction = async (
   event: APIGatewayProxyEvent,
@@ -15,8 +19,15 @@ export const scraperFunction = async (
   console.log("👀 👉🏽 ~  event:", event);
   
   try {
-  
-    return response(201, { message: "Item guardado éxitosamente"});
+    const res = await fetch(URL);
+    const data = (await res.json()) as DolarApiResponse;
+    console.log('👀 👉🏽 ~  data:', data)
+    
+    if (!data) return response(404, { message: "No se encontraron datos" });
+
+    await configService.updateTasaBcv(data.promedio);
+
+    return response(200, { message: `Configuración actualizada con éxito`,  tasa_actualizada: data.promedio });
   } catch (error) {
     console.error("Error al guardar en DynamoDB:", error);
     const errorMessage =

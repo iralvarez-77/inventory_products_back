@@ -50,7 +50,8 @@ export class InventoryProductsBackStack extends cdk.Stack {
     });
     
     const cronRule = new events.Rule(this, 'CronEveryTwoHoursRule', {
-      schedule: events.Schedule.rate(cdk.Duration.hours(2)),
+      schedule: events.Schedule.rate(cdk.Duration.hours(24)),
+      //schedule: events.Schedule.rate(cdk.Duration.minutes(1)),
     });
     
     cronRule.addTarget(new targets.LambdaFunction(scraperFunction));

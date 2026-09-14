@@ -7,6 +7,11 @@ export interface Config {
   ultima_actualizacion: string;
 }
 
+export interface DolarApiResponse {
+  promedio: number;
+  [key: string]: any; // Permite otras propiedades que traiga la API (como fecha, fuente, etc.)
+}
+
 export class ConfigurationService {
   private docClient: DynamoDBDocumentClient;
   private tableName: string;
