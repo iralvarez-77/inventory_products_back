@@ -11,14 +11,32 @@ export class InventoryProductsBackStack extends cdk.Stack {
     super(scope, id, props);
 
     const productsTable = new dynamo.Table(this, 'ProductsInventoryTable', {
-        tableName: 'Products',
+        tableName: 'ProductsTable',
         partitionKey: { 
-          name: 'id', 
+          name: 'PK', 
+          type: dynamo.AttributeType.STRING 
+        },
+        sortKey: { 
+          name: 'SK', 
           type: dynamo.AttributeType.STRING 
         },
         removalPolicy: cdk.RemovalPolicy.DESTROY, 
         billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
     });
+
+    // const productsTableV2 = new dynamo.Table(this, 'ProductsInventoryTableV2', {
+    //     tableName: 'ProductsV2',
+    //     partitionKey: { 
+    //       name: 'PK', 
+    //       type: dynamo.AttributeType.STRING 
+    //     },
+    //     sortKey: { 
+    //       name: 'SK', 
+    //       type: dynamo.AttributeType.STRING 
+    //   },
+    //     removalPolicy: cdk.RemovalPolicy.DESTROY, 
+    //     billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
+    // });
 
     const configurationTable = new dynamo.Table(this, 'ConfigurationTable', {
         tableName: 'ConfigTable',
