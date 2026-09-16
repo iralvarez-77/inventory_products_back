@@ -5,15 +5,11 @@ import {
   APIGatewayProxyResult,
   Context,
 } from "aws-lambda";
-import { randomUUID } from "crypto";
+//import { randomUUID } from "crypto";
 import ProductService, { Product } from "../../src/shared/product_service";
-import { ConfigurationService } from "../../src/shared/configuration_service";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
-const CONFIG_TABLE = process.env.CONFIG_TABLE ?? "";
-
 const productService = new ProductService(PRODUCTS_TABLE);
-const configService = new ConfigurationService(CONFIG_TABLE);
 
 export const createProductFunction = async (
   event: APIGatewayProxyEvent,
@@ -28,32 +24,27 @@ export const createProductFunction = async (
     if (!body)
       return response(400, { message: "El cuerpo de la petición (body) es requerido" });
 
-    const { nombre, costo_usd, margen_ganancia, stock, stock_minimo} = body;
+    const { nombre, costo_usd, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = body;
     
-    const precio_venta_usd = costo_usd * (1 + margen_ganancia / 100);
+    //const precio_venta_usd = costo_usd * (1 + margen_ganancia / 100);
+    const precio_venta_usd = Math.round((costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
 
-    const config = await configService.getConfig();
-    if (!config) 
-      return response(500, { message: "No se pudo recuperar la tasa de cambio" });
-    console.log('👀 👉🏽 ~  config:', config)
-    const { tasa_bcv } = config;
-    
-    const precio_venta_ves_raw = precio_venta_usd * tasa_bcv; // tasa_bcv_día 
-    const precio_venta_ves = Math.round(precio_venta_ves_raw * 100) / 100; // Redondear a 2 decimales
 
     const productItem: Product = {
-      id: randomUUID(),
+      PK: `TENANT#${nombre_comercio.toLowerCase().replace(/\s+/g, '_')}`,
+      SK: `PROD#${codigo_barras}`,
       nombre,
+      nombre_comercio,
       costo_usd,
       margen_ganancia,
       precio_venta_usd,
-      precio_venta_ves,
       stock,
       stock_minimo,
-      codigo_barras: "7591031000132",      // Opcional
+      codigo_barras, 
       fecha_creacion: new Date().toISOString(), // ISO String
       ultima_actualizacion: new Date().toISOString(), // ISO String
     };
+
     await productService.createProduct(productItem);
 
     return response(201, { message: "Item guardado éxitosamente", productItem });

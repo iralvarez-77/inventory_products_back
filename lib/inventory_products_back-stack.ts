@@ -24,19 +24,6 @@ export class InventoryProductsBackStack extends cdk.Stack {
         billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
     });
 
-    // const productsTableV2 = new dynamo.Table(this, 'ProductsInventoryTableV2', {
-    //     tableName: 'ProductsV2',
-    //     partitionKey: { 
-    //       name: 'PK', 
-    //       type: dynamo.AttributeType.STRING 
-    //     },
-    //     sortKey: { 
-    //       name: 'SK', 
-    //       type: dynamo.AttributeType.STRING 
-    //   },
-    //     removalPolicy: cdk.RemovalPolicy.DESTROY, 
-    //     billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
-    // });
 
     const configurationTable = new dynamo.Table(this, 'ConfigurationTable', {
         tableName: 'ConfigTable',
@@ -52,6 +39,15 @@ export class InventoryProductsBackStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       entry: 'lambda/create_product_function/index.ts',
       handler: 'createProductFunction',
+      environment: {
+        PRODUCTS_TABLE: productsTable.tableName,
+      },
+    });
+
+    const getProductsFunction = new lambdaNodejs.NodejsFunction(this, 'GetProductsFunction', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      entry: 'lambda/get_products_function/index.ts',
+      handler: 'getProductsFunction',
       environment: {
         PRODUCTS_TABLE: productsTable.tableName,
         CONFIG_TABLE: configurationTable.tableName,
@@ -75,15 +71,16 @@ export class InventoryProductsBackStack extends cdk.Stack {
     cronRule.addTarget(new targets.LambdaFunction(scraperFunction));
     
     productsTable.grantWriteData(createProductFunction);
-    configurationTable.grantReadData(createProductFunction);
+    productsTable.grantReadData(getProductsFunction);
+    configurationTable.grantReadData(getProductsFunction);
     configurationTable.grantWriteData(scraperFunction);
 
     const inventoryAPI = new apigw.RestApi(this, 'InventoryApi');
-    const integration = new apigw.LambdaIntegration(createProductFunction);
+    const createProductIntegration = new apigw.LambdaIntegration(createProductFunction);
+    const getProductsIntegration = new apigw.LambdaIntegration(getProductsFunction);
+
     const inventory = inventoryAPI.root.addResource('products');
-    inventory.addMethod('POST', integration);
-
-
-
+    inventory.addMethod('POST', createProductIntegration);
+    inventory.addMethod('GET', getProductsIntegration);
   }
 }
