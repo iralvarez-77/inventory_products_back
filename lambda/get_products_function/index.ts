@@ -18,13 +18,6 @@ let tasa_cacheada: number | null = null;
 let ultima_actualizacion = 0;
 const CACHE_TTL = 60000; 
 
-interface Producto {
-  id: string;
-  nombre: string;
-  precioUSD: number;
-  precioVES?: number;
-}
-
 export const getProductsFunction = async (
   event: APIGatewayProxyEvent,
   context: Context,
