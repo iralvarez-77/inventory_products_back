@@ -3,6 +3,8 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  GetCommand,
+  GetCommandInput,
   PutCommand,
   PutCommandInput,
   QueryCommand, QueryCommandInput
@@ -65,6 +67,27 @@ export class ProductService {
       throw error;
     }
 
+  }
+
+  async getProductByPkSk(nombre_comercio: string, codigo_barras: string): Promise<Product | null> {
+    const pk = `TENANT#${nombre_comercio}`;
+    const sk = `PROD#${codigo_barras}`;
+
+    const input: GetCommandInput = {
+      TableName: this.tableName,
+      Key: {
+        PK: pk,
+        SK: sk
+      }
+    };
+
+    try {
+      const response = await this.docClient.send(new GetCommand(input));
+      return (response.Item as Product) ?? null;
+    } catch (error) {
+      console.error("getProductByPkSk:", error);
+      throw error;
+    }
   }
 }
 
