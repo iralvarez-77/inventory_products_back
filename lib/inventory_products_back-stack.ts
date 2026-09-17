@@ -56,8 +56,18 @@ export class InventoryProductsBackStack extends cdk.Stack {
 
     const getProductFunction = new lambdaNodejs.NodejsFunction(this, 'GetProductFunction', {
       runtime: lambda.Runtime.NODEJS_24_X,
-      entry: 'lambda/get_products_function/index.ts',
+      entry: 'lambda/get_product_function/index.ts',
       handler: 'getProductFunction',
+      environment: {
+        PRODUCTS_TABLE: productsTable.tableName,
+        CONFIG_TABLE: configurationTable.tableName,
+      },
+    });
+
+    const updateCostFunction = new lambdaNodejs.NodejsFunction(this, 'UpdateCostFunction', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      entry: 'lambda/update_cost_function/index.ts',
+      handler: 'updateCostFunction',
       environment: {
         PRODUCTS_TABLE: productsTable.tableName,
         CONFIG_TABLE: configurationTable.tableName,
@@ -83,6 +93,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
     productsTable.grantWriteData(createProductFunction);
     productsTable.grantReadData(getProductsFunction);
     productsTable.grantReadData(getProductFunction);
+    productsTable.grantWriteData(updateCostFunction);
     configurationTable.grantReadData(getProductsFunction);
     configurationTable.grantReadData(getProductFunction);
     configurationTable.grantWriteData(scraperFunction);
