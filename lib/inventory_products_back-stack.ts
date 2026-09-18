@@ -101,9 +101,16 @@ export class InventoryProductsBackStack extends cdk.Stack {
     const inventoryAPI = new apigw.RestApi(this, 'InventoryApi');
     const createProductIntegration = new apigw.LambdaIntegration(createProductFunction);
     const getProductsIntegration = new apigw.LambdaIntegration(getProductsFunction);
+    const getProductIntegration = new apigw.LambdaIntegration(getProductFunction);
+    const updateCostIntegration = new apigw.LambdaIntegration(getProductsFunction);
 
     const inventory = inventoryAPI.root.addResource('products');
+    const product_cost = inventory.addResource('cost');
+    const productByComercio = inventory.addResource('{nombre_comercio}');
+    const productByBarcode = productByComercio.addResource('{codigo_barras}');
     inventory.addMethod('POST', createProductIntegration);
     inventory.addMethod('GET', getProductsIntegration);
+    product_cost.addMethod('PUT', updateCostIntegration);
+    productByBarcode.addMethod('GET', getProductIntegration);
   }
 }

@@ -6,32 +6,32 @@ import {
   Context,
 } from "aws-lambda";
 //import { randomUUID } from "crypto";
-import ProductService from "../../src/shared/product_service";
+import ProductService, { Product } from "../../src/shared/product_service";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
 
-export const getProductFunction = async (
+export const updateCostFunction = async (
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   console.log("👀 👉🏽 ~  context:", context);
   console.log("👀 👉🏽 ~  event:", event);
 
-    const nombre_comercio = event.queryStringParameters?.nombre_comercio;
-    const codigo_barras = event.queryStringParameters?.codigo_barras;
+  const body = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
   
   try {
-    if (!nombre_comercio || !codigo_barras) 
-      return response(400, { message: "Faltan los parámetros requeridos" });
+    if (!body)
+      return response(400, { message: "El cuerpo de la petición (body) es requerido" });
 
+    const { nombre_comercio, costo_usd: nuevo_costo_usd, codigo_barras} = body
     const product = await productService.getProductByPkSk(nombre_comercio, codigo_barras);
-
     if (!product) {
       return response(404, { message: "Producto no encontrado" });
     }
+    const { costo_usd , margen_ganancia } = product;
 
-    return response(200, { message: "Producto encontrado éxitosamente", producto: product });
+    return response(201, { message: "Item guardado éxitosamente" });
   } catch (error) {
     console.error("Error al guardar en DynamoDB:", error);
     const errorMessage =

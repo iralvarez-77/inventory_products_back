@@ -7,7 +7,9 @@ import {
   GetCommandInput,
   PutCommand,
   PutCommandInput,
-  QueryCommand, QueryCommandInput
+  QueryCommand, QueryCommandInput,
+  UpdateCommand,
+  UpdateCommandInput
 } from "@aws-sdk/lib-dynamodb";
 
 export interface Product {
@@ -68,7 +70,6 @@ export class ProductService {
     }
 
   }
-
   async getProductByPkSk(nombre_comercio: string, codigo_barras: string): Promise<Product | null> {
     const pk = `TENANT#${nombre_comercio}`;
     const sk = `PROD#${codigo_barras}`;
