@@ -18,12 +18,11 @@ export const getProductFunction = async (
   console.log("👀 👉🏽 ~  context:", context);
   console.log("👀 👉🏽 ~  event:", event);
 
-    const nombre_comercio = event.queryStringParameters?.nombre_comercio;
-    const codigo_barras = event.queryStringParameters?.codigo_barras;
+    const { nombre_comercio, codigo_barras } = event.pathParameters || {};
   
   try {
     if (!nombre_comercio || !codigo_barras) 
-      return response(400, { message: "Faltan los parámetros requeridos" });
+      return response(400, { message: "Faltan parámetros requeridos en la ruta" });
 
     const product = await productService.getProductByPkSk(nombre_comercio, codigo_barras);
 
