@@ -71,7 +71,7 @@ export class ProductService {
 
   }
   async getProductByPkSk(nombre_comercio: string, codigo_barras: string): Promise<Product | null> {
-    const pk = `TENANT#${nombre_comercio}`;
+    const pk = `TENANT#${nombre_comercio.toLowerCase().replace(/\s+/g, '_')}`;
     const sk = `PROD#${codigo_barras}`;
 
     const input: GetCommandInput = {
