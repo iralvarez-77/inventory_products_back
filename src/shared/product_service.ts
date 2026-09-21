@@ -94,7 +94,7 @@ export class ProductService {
     codigo_barras: string,
     nuevo_costo_usd: number,
     nuevo_precio_venta_usd: number): Promise<Product | void> {
-    const pk = `TENANT#${nombre_comercio}`;
+    const pk = `TENANT#${nombre_comercio.toLowerCase().replace(/\s+/g, '_')}`;
     const sk = `PROD#${codigo_barras}`;
 
     const input: UpdateCommandInput = {
