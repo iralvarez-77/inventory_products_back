@@ -93,7 +93,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
     productsTable.grantWriteData(createProductFunction);
     productsTable.grantReadData(getProductsFunction);
     productsTable.grantReadData(getProductFunction);
-    productsTable.grantWriteData(updateCostFunction);
+    productsTable.grantReadWriteData(updateCostFunction);
     configurationTable.grantReadData(getProductsFunction);
     configurationTable.grantReadData(getProductFunction);
     configurationTable.grantWriteData(scraperFunction);
