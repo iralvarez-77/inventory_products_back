@@ -102,7 +102,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
     const createProductIntegration = new apigw.LambdaIntegration(createProductFunction);
     const getProductsIntegration = new apigw.LambdaIntegration(getProductsFunction);
     const getProductIntegration = new apigw.LambdaIntegration(getProductFunction);
-    const updateCostIntegration = new apigw.LambdaIntegration(getProductsFunction);
+    const updateCostIntegration = new apigw.LambdaIntegration(updateCostFunction);
 
     const inventory = inventoryAPI.root.addResource('products');
     const product_cost = inventory.addResource('cost');

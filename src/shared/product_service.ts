@@ -90,6 +90,37 @@ export class ProductService {
       throw error;
     }
   }
+  async updateProductcost(nombre_comercio: string,
+    codigo_barras: string,
+    nuevo_costo_usd: number,
+    nuevo_precio_venta_usd: number): Promise<Product | void> {
+    const pk = `TENANT#${nombre_comercio}`;
+    const sk = `PROD#${codigo_barras}`;
+
+    const input: UpdateCommandInput = {
+        TableName: this.tableName,
+        Key: {
+          PK: pk,
+          SK: sk
+        },
+        UpdateExpression: "SET costo_usd = :nc, precio_venta_usd = :np, ultima_actualizacion = :ua",
+        ExpressionAttributeValues: {
+          ":nc": nuevo_costo_usd,
+          ":np": nuevo_precio_venta_usd,
+          ":ua": new Date().toISOString()
+        },
+        ReturnValues: "ALL_NEW" 
+      };
+
+    try {
+      await this.docClient.send(new UpdateCommand(input));
+      
+    } catch (error) {
+      console.error("updateProductcost", error);
+      throw error;
+    }
+
+  }
 }
 
 export default ProductService;
