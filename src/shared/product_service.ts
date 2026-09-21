@@ -93,7 +93,7 @@ export class ProductService {
   async updateProductcost(nombre_comercio: string,
     codigo_barras: string,
     nuevo_costo_usd: number,
-    nuevo_precio_venta_usd: number): Promise<Product | void> {
+    nuevo_precio_venta_usd: number): Promise<Product> {
     const pk = `TENANT#${nombre_comercio.toLowerCase().replace(/\s+/g, '_')}`;
     const sk = `PROD#${codigo_barras}`;
 
@@ -113,7 +113,8 @@ export class ProductService {
       };
 
     try {
-      await this.docClient.send(new UpdateCommand(input));
+      const response = await this.docClient.send(new UpdateCommand(input));
+      return response.Attributes as Product;
       
     } catch (error) {
       console.error("updateProductcost", error);
