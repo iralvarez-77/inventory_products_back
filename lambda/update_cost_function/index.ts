@@ -29,11 +29,21 @@ export const updateCostFunction = async (
     if (!product) {
       return response(404, { message: "Producto no encontrado" });
     }
-    const { margen_ganancia } = product;
+    const { costo_usd:costo_anterior, margen_ganancia, nombre } = product;
     const nuevo_precio_venta_usd = Math.round((nuevo_costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
     const updatedProduct = await productService.updateProductcost(nombre_comercio, codigo_barras, nuevo_costo_usd, nuevo_precio_venta_usd);
 
-    return response(200, { message: "Item actualizado éxitosamente", product: updatedProduct });
+    const hubo_incremento = nuevo_costo_usd > costo_anterior;
+    let alerta = null;
+
+    if (hubo_incremento) {
+      alerta = {
+        tipo: 'COSTO_REPOSICION_INCREMENTADO',
+        mensaje: `¡Alerta de Reposición! El costo de "${nombre}" subió de $${costo_anterior} a $${nuevo_costo_usd}. El precio de venta sugerido se ajustó automáticamente para proteger tu margen del ${margen_ganancia}%.`
+      };
+    }
+
+    return response(200, { message: "Item actualizado éxitosamente", product: updatedProduct, alert: alerta});
   } catch (error) {
     console.error("Error al guardar en DynamoDB:", error);
     const errorMessage =
