@@ -24,6 +24,11 @@ export class InventoryProductsBackStack extends cdk.Stack {
         billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
     });
 
+    productsTable.addGlobalSecondaryIndex({
+      indexName: 'EstadoStockIndex',
+      partitionKey: { name: 'estado_stock', type: dynamo.AttributeType.STRING },
+      projectionType: dynamo.ProjectionType.ALL,
+    });
 
     const configurationTable = new dynamo.Table(this, 'ConfigurationTable', {
         tableName: 'ConfigTable',

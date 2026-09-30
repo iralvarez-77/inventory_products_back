@@ -26,8 +26,8 @@ export const createProductFunction = async (
 
     const { nombre, costo_usd, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = body;
     
-    //const precio_venta_usd = costo_usd * (1 + margen_ganancia / 100);
     const precio_venta_usd = Math.round((costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
+    const estado_stock = stock <= stock_minimo ? 'CRITICO' : 'OK';
 
 
     const productItem: Product = {
@@ -40,6 +40,7 @@ export const createProductFunction = async (
       precio_venta_usd,
       stock,
       stock_minimo,
+      estado_stock,
       codigo_barras, 
       fecha_creacion: new Date().toISOString(), // ISO String
       ultima_actualizacion: new Date().toISOString(), // ISO String

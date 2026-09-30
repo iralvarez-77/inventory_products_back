@@ -39,7 +39,7 @@ export const updateCostFunction = async (
     if (hubo_incremento) {
       alerta = {
         tipo: 'COSTO_REPOSICION_INCREMENTADO',
-        mensaje: `¡Alerta de Reposición! El costo de "${nombre}" subió de $${costo_anterior} a $${nuevo_costo_usd}. El precio de venta sugerido se ajustó automáticamente para proteger tu margen del ${margen_ganancia}%.`
+        mensaje: `¡Alerta de Reposición! El costo de "${nombre}" subió de $${costo_anterior} a $${nuevo_costo_usd}. El precio de venta sugerido es de ${nuevo_precio_venta_usd} y se ajustó automáticamente para proteger tu margen del ${margen_ganancia}%.`
       };
     }
 

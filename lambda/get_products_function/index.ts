@@ -29,7 +29,7 @@ export const getProductsFunction = async (
     const comercio = event.queryStringParameters?.nombre_comercio;
     if (!comercio) 
       return response(400, { 
-        message: "El parámetro 'nombre_comercio' es obligatorio en los query parameters de la URL." 
+        message: "El parámetro es obligatorio" 
       });
     const nombre_comercio = comercio.toLowerCase().replace(/\s+/g, '_')
     

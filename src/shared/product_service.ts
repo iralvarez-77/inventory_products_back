@@ -22,9 +22,12 @@ export interface Product {
   precio_venta_usd: number;
   stock: number;
   stock_minimo: number;
+  estado_stock: string;        // 'OK' or 'CRITICO'
   codigo_barras: string;      // Opcional
   fecha_creacion: string;      // ISO String
   ultima_actualizacion: string; // ISO String
+  precio_venta_ves?: number;
+  tasa_bcv_aplicada?: number;
 }
 
 export class ProductService {
