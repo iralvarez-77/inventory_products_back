@@ -87,6 +87,16 @@ export class InventoryProductsBackStack extends cdk.Stack {
         CONFIG_TABLE: configurationTable.tableName,
       },
     });
+
+    const listProductsCriticsFunction = new lambdaNodejs.NodejsFunction(this, 'ListProductsCriticsFunction', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      entry: 'lambda/list_products_critics_function/index.ts',
+      handler: 'listProductsCriticsFunction',
+      environment: {
+        PRODUCTS_TABLE: productsTable.tableName,
+        CONFIG_TABLE: configurationTable.tableName,
+      },
+    });
     
     const cronRule = new events.Rule(this, 'CronEveryTwoHoursRule', {
       //schedule: events.Schedule.rate(cdk.Duration.minutes(1)),
