@@ -39,7 +39,7 @@ export class ProductService {
     const client = new DynamoDBClient({});
     this.docClient = DynamoDBDocumentClient.from(client);
     this.tableName = tableName;
-    this.indexName = process.env.PRODUCTS_INDEX_NAME || ''; // Nombre del índice secundario global
+    this.indexName = process.env.PRODUCTS_INDEX_NAME || '';
   }
 
   async createProduct(item: Product): Promise<void> {
@@ -76,6 +76,7 @@ export class ProductService {
     }
 
   }
+
   async getProductByPkSk(nombre_comercio: string, codigo_barras: string): Promise<Product | null> {
     const pk = `TENANT#${nombre_comercio.toLowerCase().replace(/\s+/g, '_')}`;
     const sk = `PROD#${codigo_barras}`;
@@ -96,6 +97,7 @@ export class ProductService {
       throw error;
     }
   }
+  
   async updateProductcost(nombre_comercio: string,
     codigo_barras: string,
     nuevo_costo_usd: number,

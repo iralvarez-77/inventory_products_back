@@ -2,10 +2,10 @@ import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 import * as dynamo from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
+import { InventoryApiConstruct } from './constructs/api_gateway.constructs';
 export class InventoryProductsBackStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -115,22 +115,12 @@ export class InventoryProductsBackStack extends cdk.Stack {
     configurationTable.grantReadData(getProductFunction);
     configurationTable.grantWriteData(scraperFunction);
 
-    const inventoryAPI = new apigw.RestApi(this, 'InventoryApi');
-    const createProductIntegration = new apigw.LambdaIntegration(createProductFunction);
-    const getProductsIntegration = new apigw.LambdaIntegration(getProductsFunction);
-    const getProductIntegration = new apigw.LambdaIntegration(getProductFunction);
-    const updateCostIntegration = new apigw.LambdaIntegration(updateCostFunction);
-    const listProductsCriticsIntegration = new apigw.LambdaIntegration(listProductsCriticsFunction);
-
-    const inventory = inventoryAPI.root.addResource('products');
-    const product_cost = inventory.addResource('cost');
-    const products_critics = inventory.addResource('critics');
-    products_critics.addMethod('GET', listProductsCriticsIntegration);
-    const productByComercio = inventory.addResource('{nombre_comercio}');
-    const productByBarcode = productByComercio.addResource('{codigo_barras}');
-    inventory.addMethod('POST', createProductIntegration);
-    inventory.addMethod('GET', getProductsIntegration);
-    product_cost.addMethod('PUT', updateCostIntegration);
-    productByBarcode.addMethod('GET', getProductIntegration);
+    new InventoryApiConstruct(this, 'InventoryApiGateway', {
+      createProductFn: createProductFunction,
+      getProductsFn: getProductsFunction,
+      getProductFn: getProductFunction,
+      updateCostFn: updateCostFunction,
+      listProductsCriticsFn: listProductsCriticsFunction,
+    });
   }
 }
