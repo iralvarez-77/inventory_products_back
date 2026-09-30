@@ -33,11 +33,13 @@ export interface Product {
 export class ProductService {
   private docClient: DynamoDBDocumentClient;
   private tableName: string;
+  private indexName: string;
 
   constructor(tableName: string) {
     const client = new DynamoDBClient({});
     this.docClient = DynamoDBDocumentClient.from(client);
     this.tableName = tableName;
+    this.indexName = process.env.PRODUCTS_INDEX_NAME || ''; // Nombre del índice secundario global
   }
 
   async createProduct(item: Product): Promise<void> {
@@ -53,6 +55,7 @@ export class ProductService {
     }
 
   }
+
   async getProducts(nombreComercio: string): Promise<Product[]> {
 
     const tenantId = `TENANT#${nombreComercio}`;
@@ -121,6 +124,25 @@ export class ProductService {
       
     } catch (error) {
       console.error("updateProductcost", error);
+      throw error;
+    }
+
+  }
+
+  async listProductsCritics(): Promise<Product[]> {
+
+    const input: QueryCommandInput = {
+      TableName: this.tableName,
+      IndexName: this.indexName,
+      KeyConditionExpression: '#es = :estado',
+      ExpressionAttributeNames: { '#es': 'estado_stock' },
+      ExpressionAttributeValues: { ':estado': 'CRITICO' }
+    };
+    try {
+      const response = await this.docClient.send(new QueryCommand(input));
+      return (response.Items as Product[]) ?? [];
+    } catch (error) {
+      console.error("listProductsCritics", error);
       throw error;
     }
 

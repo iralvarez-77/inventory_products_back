@@ -5,7 +5,6 @@ import {
   APIGatewayProxyResult,
   Context,
 } from "aws-lambda";
-//import { randomUUID } from "crypto";
 import ProductService, { Product } from "../../src/shared/product_service";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
@@ -18,13 +17,13 @@ export const createProductFunction = async (
   console.log("👀 👉🏽 ~  context:", context);
   console.log("👀 👉🏽 ~  event:", event);
 
-  const body = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
+  const bodyEvent = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
   
-  try {
-    if (!body)
+  try { 
+    if (!bodyEvent)
       return response(400, { message: "El cuerpo de la petición (body) es requerido" });
 
-    const { nombre, costo_usd, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = body;
+    const { nombre, costo_usd, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = bodyEvent;
     
     const precio_venta_usd = Math.round((costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
     const estado_stock = stock <= stock_minimo ? 'CRITICO' : 'OK';

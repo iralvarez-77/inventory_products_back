@@ -10,6 +10,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const estadoStockIndexName = 'EstadoStockIndex';
     const productsTable = new dynamo.Table(this, 'ProductsInventoryTable', {
         tableName: 'ProductsTable',
         partitionKey: { 
@@ -25,7 +26,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
     });
 
     productsTable.addGlobalSecondaryIndex({
-      indexName: 'EstadoStockIndex',
+      indexName: estadoStockIndexName,
       partitionKey: { name: 'estado_stock', type: dynamo.AttributeType.STRING },
       projectionType: dynamo.ProjectionType.ALL,
     });
@@ -94,7 +95,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
       handler: 'listProductsCriticsFunction',
       environment: {
         PRODUCTS_TABLE: productsTable.tableName,
-        CONFIG_TABLE: configurationTable.tableName,
+        PRODUCTS_INDEX_NAME: estadoStockIndexName,
       },
     });
     
@@ -107,6 +108,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
     
     productsTable.grantWriteData(createProductFunction);
     productsTable.grantReadData(getProductsFunction);
+    productsTable.grantReadData(listProductsCriticsFunction);
     productsTable.grantReadData(getProductFunction);
     productsTable.grantReadWriteData(updateCostFunction);
     configurationTable.grantReadData(getProductsFunction);
@@ -118,9 +120,12 @@ export class InventoryProductsBackStack extends cdk.Stack {
     const getProductsIntegration = new apigw.LambdaIntegration(getProductsFunction);
     const getProductIntegration = new apigw.LambdaIntegration(getProductFunction);
     const updateCostIntegration = new apigw.LambdaIntegration(updateCostFunction);
+    const listProductsCriticsIntegration = new apigw.LambdaIntegration(listProductsCriticsFunction);
 
     const inventory = inventoryAPI.root.addResource('products');
     const product_cost = inventory.addResource('cost');
+    const products_critics = inventory.addResource('critics');
+    products_critics.addMethod('GET', listProductsCriticsIntegration);
     const productByComercio = inventory.addResource('{nombre_comercio}');
     const productByBarcode = productByComercio.addResource('{codigo_barras}');
     inventory.addMethod('POST', createProductIntegration);
