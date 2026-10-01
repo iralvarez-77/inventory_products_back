@@ -6,14 +6,26 @@ import {
   Context,
 } from "aws-lambda";
 import ProductService, { Product } from "../../src/shared/product_service";
+import { Logger } from "@aws-lambda-powertools/logger";
+import { Tracer } from "@aws-lambda-powertools/tracer";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
+import middy from "@middy/core";
+import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
+import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
+import { logMetrics } from "@aws-lambda-powertools/metrics/middleware";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
 
-export const createProductFunction = async (
+const logger = new Logger({ serviceName: "InventoryService" });
+const tracer = new Tracer({ serviceName: "InventoryService" });
+const metrics = new Metrics({ serviceName: "InventoryService", namespace: "InventoryApp" });
+
+const baseHandler = async (
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
+  logger.info("Procesando evento de creación de producto", { path: event.path });
   console.log("👀 👉🏽 ~  context:", context);
   console.log("👀 👉🏽 ~  event:", event);
 
@@ -45,19 +57,29 @@ export const createProductFunction = async (
       ultima_actualizacion: new Date().toISOString(), // ISO String
     };
 
+    // Añadimos metadata personalizada a los trazos de X-Ray para depuración analítica
+    tracer.putMetadata("productBarcode", codigo_barras);
     await productService.createProduct(productItem);
+    logger.info("Producto guardado exitosamente en base de datos", { productId: productItem.SK });
 
     return response(201, { message: "Item guardado éxitosamente", productItem });
   } catch (error) {
-    console.error("Error al guardar en DynamoDB:", error);
+    // Registramos errores críticos estructurados de forma automática
+    logger.error("Error en createProductFunction", error as Error);
     const errorMessage =
       error instanceof Error ? error.message : "Error desconocido";
     return response(500, {
-      message: "Error al guardar en DynamoDB",
+      message: "Error en createProductFunction",
       error: errorMessage,
     });
   }
 };
+
+// 3. Exportamos la función envolviéndola con los Middlewares oficiales de Powertools
+export const createProductFunction = middy(baseHandler)
+  .use(injectLambdaContext(logger, { logEvent: false })) // Loguea el evento automáticamente de forma estructurada
+  .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray
+  .use(logMetrics(metrics));
 
 const response = (statusCode: number, body: object): APIGatewayProxyResult => {
   return {
