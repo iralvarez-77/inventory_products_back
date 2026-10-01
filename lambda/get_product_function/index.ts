@@ -47,7 +47,7 @@ const baseHandler = async (
 
     return response(200, { message: "Producto encontrado éxitosamente", producto: product });
   } catch (error) {
-    console.error("Error al guardar en DynamoDB:", error);
+    logger.error("Error en getProductFunction", error as Error);
     const errorMessage =
       error instanceof Error ? error.message : "Error desconocido";
     return response(500, {

@@ -6,17 +6,27 @@ import {
   Context,
 } from "aws-lambda";
 import { ConfigurationService, DolarApiResponse } from "../../src/shared/configuration_service";
+import { response } from "../../src/shared/response_helper";
+import { Logger } from "@aws-lambda-powertools/logger";
+import { Tracer } from "@aws-lambda-powertools/tracer";
+import { Metrics } from "@aws-lambda-powertools/metrics";
+import middy from "@middy/core";
+import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
+import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
+import { logMetrics } from "@aws-lambda-powertools/metrics/middleware";
 
 const URL = " https://ve.dolarapi.com/v1/dolares/oficial";
 const CONFIG_TABLE = process.env.CONFIG_TABLE ?? "";
 const configService = new ConfigurationService(CONFIG_TABLE);
 
-export const scraperFunction = async (
+const logger = new Logger({ serviceName: "InventoryService" });
+const tracer = new Tracer({ serviceName: "InventoryService" });
+const metrics = new Metrics({ serviceName: "InventoryService", namespace: "InventoryApp" });
+
+const baseHandler = async (
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
-  console.log("👀 👉🏽 ~  context:", context);
-  console.log("👀 👉🏽 ~  event:", event);
   
   try {
     const res = await fetch(URL);
@@ -31,22 +41,17 @@ export const scraperFunction = async (
 
     return response(200, { message: `Configuración actualizada con éxito`,  tasa_actualizada: tasa_bcv });
   } catch (error) {
-    console.error("Error al guardar en DynamoDB:", error);
+    console.error("Error en scraperFunction", error);
     const errorMessage =
       error instanceof Error ? error.message : "Error desconocido";
     return response(500, {
-      message: "Error al guardar en DynamoDB",
+      message: "Error en scraperFunction",
       error: errorMessage,
     });
   }
 };
 
-const response = (statusCode: number, body: object): APIGatewayProxyResult => {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  };
-};
+export const scraperFunction = middy(baseHandler)
+  .use(injectLambdaContext(logger, { logEvent: true })) 
+  .use(captureLambdaHandler(tracer))
+  .use(logMetrics(metrics));

@@ -7,17 +7,28 @@ import {
 } from "aws-lambda";
 //import { randomUUID } from "crypto";
 import ProductService, { Product } from "../../src/shared/product_service";
+import { response } from "../../src/shared/response_helper";
+import { Logger } from "@aws-lambda-powertools/logger";
+import { Tracer } from "@aws-lambda-powertools/tracer";
+import { Metrics } from "@aws-lambda-powertools/metrics";
+import middy from "@middy/core";
+import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
+import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
+import { logMetrics } from "@aws-lambda-powertools/metrics/middleware";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
 
-export const updateCostFunction = async (
+const logger = new Logger({ serviceName: "InventoryService" });
+const tracer = new Tracer({ serviceName: "InventoryService" });
+const metrics = new Metrics({ serviceName: "InventoryService", namespace: "InventoryApp" });
+
+const baseHandler = async (
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
-  console.log("👀 👉🏽 ~  context:", context);
-  console.log("👀 👉🏽 ~  event:", event);
 
+  logger.info("Body", { body: event.body });
   const body = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
   
   try {
@@ -26,12 +37,15 @@ export const updateCostFunction = async (
 
     const { nombre_comercio, costo_usd: nuevo_costo_usd, codigo_barras} = body
     const product = await productService.getProductByPkSk(nombre_comercio, codigo_barras);
+    logger.info("Producto obtenido con éxito", {producto: product});
+
     if (!product) {
       return response(404, { message: "Producto no encontrado" });
     }
     const { costo_usd:costo_anterior, margen_ganancia, nombre } = product;
     const nuevo_precio_venta_usd = Math.round((nuevo_costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
     const updatedProduct = await productService.updateProductcost(nombre_comercio, codigo_barras, nuevo_costo_usd, nuevo_precio_venta_usd);
+    logger.info("Producto actualizado con éxito", {producto_actualizado: updatedProduct});
 
     const hubo_incremento = nuevo_costo_usd > costo_anterior;
     let alerta = null;
@@ -45,22 +59,17 @@ export const updateCostFunction = async (
 
     return response(200, { message: "Item actualizado éxitosamente", product: updatedProduct, alert: alerta});
   } catch (error) {
-    console.error("Error al guardar en DynamoDB:", error);
+    logger.error("Error en updateCostFunction", error as Error);
     const errorMessage =
       error instanceof Error ? error.message : "Error desconocido";
     return response(500, {
-      message: "Error al guardar en DynamoDB",
+      message: "Error en updateCostFunction",
       error: errorMessage,
     });
   }
 };
 
-const response = (statusCode: number, body: object): APIGatewayProxyResult => {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  };
-};
+export const updateCostFunction = middy(baseHandler)
+  .use(injectLambdaContext(logger, { logEvent: false })) 
+  .use(captureLambdaHandler(tracer))
+  .use(logMetrics(metrics));
