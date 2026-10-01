@@ -8,7 +8,7 @@ import {
 import ProductService, { Product } from "../../src/shared/product_service";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Tracer } from "@aws-lambda-powertools/tracer";
-import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
+import { Metrics } from "@aws-lambda-powertools/metrics";
 import middy from "@middy/core";
 import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
 import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
@@ -26,8 +26,6 @@ const baseHandler = async (
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   logger.info("Procesando evento de creación de producto", { path: event.path });
-  console.log("👀 👉🏽 ~  context:", context);
-  console.log("👀 👉🏽 ~  event:", event);
 
   const bodyEvent = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
   
@@ -57,15 +55,15 @@ const baseHandler = async (
       ultima_actualizacion: new Date().toISOString(), // ISO String
     };
 
-    // Añadimos metadata personalizada a los trazos de X-Ray para depuración analítica
     tracer.putMetadata("productBarcode", codigo_barras);
     await productService.createProduct(productItem);
+    //metrics.addMetric("ProductCreatedSuccessfully", MetricUnit.Count, 1);
     logger.info("Producto guardado exitosamente en base de datos", { productId: productItem.SK });
 
     return response(201, { message: "Item guardado éxitosamente", productItem });
   } catch (error) {
-    // Registramos errores críticos estructurados de forma automática
     logger.error("Error en createProductFunction", error as Error);
+    //metrics.addMetric("ProductCreationFailed", MetricUnit.Count, 1);
     const errorMessage =
       error instanceof Error ? error.message : "Error desconocido";
     return response(500, {
@@ -77,7 +75,7 @@ const baseHandler = async (
 
 // 3. Exportamos la función envolviéndola con los Middlewares oficiales de Powertools
 export const createProductFunction = middy(baseHandler)
-  .use(injectLambdaContext(logger, { logEvent: false })) // Loguea el evento automáticamente de forma estructurada
+  .use(injectLambdaContext(logger, { logEvent: true })) // Loguea el evento automáticamente de forma estructurada
   .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray
   .use(logMetrics(metrics));
 

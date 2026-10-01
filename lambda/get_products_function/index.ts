@@ -7,6 +7,14 @@ import {
 } from "aws-lambda";
 import { ProductService } from "../../src/shared/product_service";
 import { ConfigurationService } from "../../src/shared/configuration_service";
+import { Logger } from "@aws-lambda-powertools/logger";
+import { Tracer } from "@aws-lambda-powertools/tracer";
+import { Metrics } from "@aws-lambda-powertools/metrics";
+import middy from "@middy/core";
+import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
+import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
+import { logMetrics } from "@aws-lambda-powertools/metrics/middleware";
+import { response } from "../../src/shared/response_helper";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
 const CONFIG_TABLE = process.env.CONFIG_TABLE ?? "";
@@ -14,24 +22,29 @@ const CONFIG_TABLE = process.env.CONFIG_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
 const configService = new ConfigurationService(CONFIG_TABLE);
 
+const logger = new Logger({ serviceName: "InventoryService" });
+const tracer = new Tracer({ serviceName: "InventoryService" });
+const metrics = new Metrics({ serviceName: "InventoryService", namespace: "InventoryApp" });
+
 let tasa_cacheada: number | null = null;
 let ultima_actualizacion = 0;
 const CACHE_TTL = 60000; 
 
-export const getProductsFunction = async (
+const baseHandler = async (
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
-  console.log("👀 👉🏽 ~  context:", context);
-  console.log("👀 👉🏽 ~  event:", event);
+  const comercio = event.queryStringParameters?.nombre_comercio;
+  logger.info("NombreComercio", { nombre_comercio: comercio});
+
+  if (!comercio) 
+    return response(400, { 
+      message: "El parámetro es obligatorio" 
+    });
+  
+  const nombre_comercio = comercio.toLowerCase().replace(/\s+/g, '_')
   const ahora = Date.now();
   try {
-    const comercio = event.queryStringParameters?.nombre_comercio;
-    if (!comercio) 
-      return response(400, { 
-        message: "El parámetro es obligatorio" 
-      });
-    const nombre_comercio = comercio.toLowerCase().replace(/\s+/g, '_')
     
     if (!tasa_cacheada || (ahora - ultima_actualizacion > CACHE_TTL)) {
       const config = await configService.getConfig();
@@ -46,6 +59,8 @@ export const getProductsFunction = async (
     const tasa_VES = tasa_cacheada;
 
     const products = await productService.getProducts(nombre_comercio);
+    logger.info("Productos obtenidos con éxito");
+
 
     const products_prices_in_ves = products.map(product => ({
       ...product,
@@ -54,22 +69,19 @@ export const getProductsFunction = async (
     return response( 200, { message: "Productos obtenidos con éxito", productos: products_prices_in_ves, tasa: tasa_VES });
 
   } catch (error) {
-    console.error("Error al guardar en DynamoDB:", error);
+    logger.error("Error en getProductsFunction", error as Error);
     const errorMessage =
       error instanceof Error ? error.message : "Error desconocido";
     return response(500, {
-      message: "Error al guardar en DynamoDB",
+      message: "Error en getProductsFunction",
       error: errorMessage,
     });
   }
 };
 
-const response = (statusCode: number, body: object): APIGatewayProxyResult => {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  };
-};
+export const getProductsFunction = middy(baseHandler)
+  .use(injectLambdaContext(logger, { logEvent: false })) 
+  .use(captureLambdaHandler(tracer))
+  .use(logMetrics(metrics));
+
+
