@@ -26,7 +26,7 @@ export class ProductsLambdasConstruct extends Construct {
     const sharedLambdaConfig = {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'index.handler',
-      tracing: lambda.Tracing.ACTIVE,
+      //tracing: lambda.Tracing.ACTIVE,
       bundling: {
         minify: true,
         sourceMap: true,

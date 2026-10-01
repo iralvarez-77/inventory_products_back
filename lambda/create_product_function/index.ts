@@ -13,6 +13,7 @@ import middy from "@middy/core";
 import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
 import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
 import { logMetrics } from "@aws-lambda-powertools/metrics/middleware";
+import { response } from "../../src/shared/response_helper";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
@@ -79,12 +80,4 @@ export const createProductFunction = middy(baseHandler)
   .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray
   .use(logMetrics(metrics));
 
-const response = (statusCode: number, body: object): APIGatewayProxyResult => {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  };
-};
+

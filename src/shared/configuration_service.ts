@@ -34,7 +34,7 @@ export class ConfigurationService {
       return response.Item ? (response.Item as Config) : null;
     } catch (error) {
       console.error("Error al consultar ConfigurationService:", error);
-      throw new Error("No se pudo recuperar la tasa de cambio del sistema");
+      throw error;
     }
   }
 
