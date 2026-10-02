@@ -27,6 +27,7 @@
     "@middy/core": "^7.9.2",
     "@types/aws-lambda": "^8.10.163",
     "aws-cdk-lib": "^2.265.0",
-    "constructs": "^10.5.0"
+    "constructs": "^10.5.0",
+    "yup": "^1.7.1"
   }
 }

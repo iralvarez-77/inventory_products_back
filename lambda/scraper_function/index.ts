@@ -52,6 +52,6 @@ const baseHandler = async (
 };
 
 export const scraperFunction = middy(baseHandler)
-  .use(injectLambdaContext(logger, { logEvent: true })) 
+  .use(injectLambdaContext(logger, { logEvent: false })) 
   .use(captureLambdaHandler(tracer))
   .use(logMetrics(metrics));

@@ -14,6 +14,8 @@ import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
 import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
 import { logMetrics } from "@aws-lambda-powertools/metrics/middleware";
 import { response } from "../../src/shared/response_helper";
+import { validateBody } from "../../src/shared/middlewares/yup_validator";
+import { productSchema, ValidatedProduct } from "../../src/shared/schemas/product_schema";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
@@ -26,9 +28,10 @@ const baseHandler = async (
   event: APIGatewayProxyEvent,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
-  logger.info("Procesando evento de creación de producto", { path: event.path });
-
-  const bodyEvent = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
+  
+  //const bodyEvent = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
+  const bodyEvent = event.body as unknown as ValidatedProduct
+  logger.info("Procesando creación de producto", { body: bodyEvent });
   
   try { 
     if (!bodyEvent)
@@ -76,8 +79,9 @@ const baseHandler = async (
 
 // 3. Exportamos la función envolviéndola con los Middlewares oficiales de Powertools
 export const createProductFunction = middy(baseHandler)
-  .use(injectLambdaContext(logger, { logEvent: true })) // Loguea el evento automáticamente de forma estructurada
-  .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray
-  .use(logMetrics(metrics));
+  .use(validateBody(productSchema)) // 1. Primero intercepta y valida los datos de entrada
+  .use(injectLambdaContext(logger, { logEvent: false })) // Loguea el evento automáticamente de forma estructurada 2. Configura los logs
+  .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray. Configura las trazas de X-Ray
+  .use(logMetrics(metrics)); //Registra las métricas
 
 
