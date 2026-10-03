@@ -28,22 +28,27 @@ const baseHandler = async (
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
 
-  logger.info("Body", { body: event.body });
-  const body = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
+  const bodyEvent = (typeof event.body === 'string' 
+    ? JSON.parse(event.body) 
+    : event.body)
+
+  logger.info("Body", { body: bodyEvent});
   
   try {
-    if (!body)
-      return response(400, { message: "El cuerpo de la petición (body) es requerido" });
 
-    const { nombre_comercio, costo_usd: nuevo_costo_usd, codigo_barras} = body
+    const { nombre_comercio, costo_usd:newCostUsdString, codigo_barras} = bodyEvent
+    const nuevo_costo_usd = parseFloat(newCostUsdString);
+
     const product = await productService.getProductByPkSk(nombre_comercio, codigo_barras);
     logger.info("Producto obtenido con éxito", {producto: product});
 
-    if (!product) {
+    if (!product) 
       return response(404, { message: "Producto no encontrado" });
-    }
+    
     const { costo_usd:costo_anterior, margen_ganancia, nombre } = product;
+
     const nuevo_precio_venta_usd = Math.round((nuevo_costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
+
     const updatedProduct = await productService.updateProductcost(nombre_comercio, codigo_barras, nuevo_costo_usd, nuevo_precio_venta_usd);
     logger.info("Producto actualizado con éxito", {producto_actualizado: updatedProduct});
 
@@ -57,11 +62,14 @@ const baseHandler = async (
       };
     }
 
-    return response(200, { message: "Item actualizado éxitosamente", product: updatedProduct, alert: alerta});
+    return response(200, { message: "Item actualizado éxitosamente", product: updatedProduct, alert: alerta });
   } catch (error) {
     logger.error("Error en updateCostFunction", error as Error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
+
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : "Error desconocido";
+
     return response(500, {
       message: "Error en updateCostFunction",
       error: errorMessage,

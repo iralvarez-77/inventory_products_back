@@ -64,7 +64,7 @@ const baseHandler = async (
 
     const products_prices_in_ves = products.map(product => ({
       ...product,
-      price_VES: Math.round(product.precio_venta_usd * tasa_VES * 100) / 100
+      precio_venta_VES: Math.round(product.precio_venta_usd * tasa_VES * 100) / 100
     }));
     return response( 200, { message: "Productos obtenidos con éxito", productos: products_prices_in_ves, tasa: tasa_VES });
 

@@ -28,9 +28,6 @@ const baseHandler = async (
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   
-  if (!event.body)
-    return response(400, { message: "El cuerpo de la petición es requerido" });
-
   const bodyEvent = (typeof event.body === 'string' 
     ? JSON.parse(event.body) 
     : event.body) 
@@ -40,10 +37,8 @@ const baseHandler = async (
   try { 
 
     const { nombre, costo_usd: costString, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = bodyEvent;
-    console.log('👀 👉🏽 ~  costString:', costString)
-    
+
     const costo_usd = parseFloat(costString);
-    console.log('👀 👉🏽 ~  costo_usd:', costo_usd)
     const precio_venta_usd = Math.round((costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
     const estado_stock = stock <= stock_minimo ? 'CRITICO' : 'OK';
 
