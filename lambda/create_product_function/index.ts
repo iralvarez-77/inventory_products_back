@@ -35,12 +35,15 @@ const baseHandler = async (
     ? JSON.parse(event.body) 
     : event.body) 
 
-  logger.info("Procesando creación de producto", { body: bodyEvent });
+  logger.info("Procesando creación del producto", { body: bodyEvent });
   
   try { 
 
-    const { nombre, costo_usd, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = bodyEvent;
+    const { nombre, costo_usd: costString, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = bodyEvent;
+    console.log('👀 👉🏽 ~  costString:', costString)
     
+    const costo_usd = parseFloat(costString);
+    console.log('👀 👉🏽 ~  costo_usd:', costo_usd)
     const precio_venta_usd = Math.round((costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
     const estado_stock = stock <= stock_minimo ? 'CRITICO' : 'OK';
 
@@ -69,14 +72,15 @@ const baseHandler = async (
   } catch (error) {
     logger.error("Error en createProductFunction", error as Error);
     //metrics.addMetric("ProductCreationFailed", MetricUnit.Count, 1);
-    if (error instanceof ConditionalCheckFailedException) {
+    if (error instanceof ConditionalCheckFailedException) 
       return response(409, {
         message: "Error al registrar el producto",
         error: "El producto con este código de barras ya está registrado en este comercio.",
       });
-    }
-    const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
+    
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : "Error desconocido";
 
     return response(500, {
       message: "Error en createProductFunction",
@@ -86,8 +90,8 @@ const baseHandler = async (
 };
 
 export const createProductFunction = middy(baseHandler)
-  .use(injectLambdaContext(logger, { logEvent: false })) // Loguea el evento automáticamente de forma estructurada 2. Configura los logs
-  .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray. Configura las trazas de X-Ray
+  .use(injectLambdaContext(logger, { logEvent: false })) // Loguea el evento automáticamente de forma estructurada
+  .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray.
   .use(logMetrics(metrics)); //Registra las métricas
 
 
