@@ -46,11 +46,12 @@ export class ProductService {
     const input: PutCommandInput = {
       TableName: this.tableName,
       Item: item,
+      ConditionExpression: "attribute_not_exists(SK)",
     };
     try {
       await this.docClient.send(new PutCommand(input));
     } catch (error) {
-      console.error("createProduct:", error);
+      console.error("createProduct method:", error);
       throw error;
     }
 

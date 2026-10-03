@@ -14,8 +14,7 @@ import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
 import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
 import { logMetrics } from "@aws-lambda-powertools/metrics/middleware";
 import { response } from "../../src/shared/response_helper";
-import { validateBody } from "../../src/shared/middlewares/yup_validator";
-import { productSchema, ValidatedProduct } from "../../src/shared/schemas/product_schema";
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? "";
 const productService = new ProductService(PRODUCTS_TABLE);
@@ -29,19 +28,21 @@ const baseHandler = async (
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   
-  //const bodyEvent = (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) as Product;
-  const bodyEvent = event.body as unknown as ValidatedProduct
+  if (!event.body)
+    return response(400, { message: "El cuerpo de la petición es requerido" });
+
+  const bodyEvent = (typeof event.body === 'string' 
+    ? JSON.parse(event.body) 
+    : event.body) 
+
   logger.info("Procesando creación de producto", { body: bodyEvent });
   
   try { 
-    if (!bodyEvent)
-      return response(400, { message: "El cuerpo de la petición (body) es requerido" });
 
     const { nombre, costo_usd, margen_ganancia, stock, stock_minimo, nombre_comercio, codigo_barras} = bodyEvent;
     
     const precio_venta_usd = Math.round((costo_usd * (1 + margen_ganancia / 100)) * 100) / 100;
     const estado_stock = stock <= stock_minimo ? 'CRITICO' : 'OK';
-
 
     const productItem: Product = {
       PK: `TENANT#${nombre_comercio.toLowerCase().replace(/\s+/g, '_')}`,
@@ -59,7 +60,7 @@ const baseHandler = async (
       ultima_actualizacion: new Date().toISOString(), // ISO String
     };
 
-    tracer.putMetadata("productBarcode", codigo_barras);
+    //tracer.putMetadata("productBarcode", codigo_barras);
     await productService.createProduct(productItem);
     //metrics.addMetric("ProductCreatedSuccessfully", MetricUnit.Count, 1);
     logger.info("Producto guardado exitosamente en base de datos", { productId: productItem.SK });
@@ -68,8 +69,15 @@ const baseHandler = async (
   } catch (error) {
     logger.error("Error en createProductFunction", error as Error);
     //metrics.addMetric("ProductCreationFailed", MetricUnit.Count, 1);
+    if (error instanceof ConditionalCheckFailedException) {
+      return response(409, {
+        message: "Error al registrar el producto",
+        error: "El producto con este código de barras ya está registrado en este comercio.",
+      });
+    }
     const errorMessage =
       error instanceof Error ? error.message : "Error desconocido";
+
     return response(500, {
       message: "Error en createProductFunction",
       error: errorMessage,
@@ -77,9 +85,7 @@ const baseHandler = async (
   }
 };
 
-// 3. Exportamos la función envolviéndola con los Middlewares oficiales de Powertools
 export const createProductFunction = middy(baseHandler)
-  .use(validateBody(productSchema)) // 1. Primero intercepta y valida los datos de entrada
   .use(injectLambdaContext(logger, { logEvent: false })) // Loguea el evento automáticamente de forma estructurada 2. Configura los logs
   .use(captureLambdaHandler(tracer)) // Traza los segmentos para AWS X-Ray. Configura las trazas de X-Ray
   .use(logMetrics(metrics)); //Registra las métricas

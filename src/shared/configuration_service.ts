@@ -31,7 +31,9 @@ export class ConfigurationService {
     try {
       const response = await this.docClient.send(command);
       console.log('👀 👉🏽 ~  response:', response.Item)
-      return response.Item ? (response.Item as Config) : null;
+      return response.Item 
+        ? (response.Item as Config) 
+        : null;
     } catch (error) {
       console.error("Error al consultar ConfigurationService:", error);
       throw error;
