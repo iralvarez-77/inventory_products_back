@@ -7,6 +7,7 @@ interface InventoryApiProps {
   getProductsFn: lambda.IFunction;
   getProductFn: lambda.IFunction;
   updateCostFn: lambda.IFunction;
+  updateProductFn: lambda.IFunction;
   listProductsCriticsFn: lambda.IFunction;
 }
 export class InventoryApiConstruct extends Construct {
@@ -51,6 +52,7 @@ export class InventoryApiConstruct extends Construct {
       },
     });
     productsResource.addMethod('GET', new apigw.LambdaIntegration(props.getProductsFn));
+    productsResource.addMethod('PUT', new apigw.LambdaIntegration(props.updateProductFn));
     costResource.addMethod('PUT', new apigw.LambdaIntegration(props.updateCostFn), {
       requestValidator: bodyValidator,
       requestModels: {

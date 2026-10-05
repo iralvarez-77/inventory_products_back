@@ -16,6 +16,7 @@ export class ProductsLambdasConstruct extends Construct {
   public readonly getProductsFn: lambdaNodejs.NodejsFunction;
   public readonly getProductFn: lambdaNodejs.NodejsFunction;
   public readonly updateCostFn: lambdaNodejs.NodejsFunction;
+  public readonly updateProductFn: lambdaNodejs.NodejsFunction;
   public readonly listProductsCriticsFn: lambdaNodejs.NodejsFunction;
   public readonly scraperFn: lambdaNodejs.NodejsFunction;
 
@@ -75,6 +76,15 @@ export class ProductsLambdasConstruct extends Construct {
       environment: {
         PRODUCTS_TABLE: props.productsTable.tableName,
         CONFIG_TABLE: props.configurationTable.tableName,
+      },
+    });
+
+    this.updateProductFn = new lambdaNodejs.NodejsFunction(this, 'UpdateProductFunction', {
+      ...sharedLambdaConfig,
+      entry: 'lambda/update_product_function/index.ts',
+      handler: 'updateProductFunction',
+      environment: {
+        PRODUCTS_TABLE: props.productsTable.tableName,
       },
     });
 

@@ -59,6 +59,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
     productsTable.grantReadData(lambdas.listProductsCriticsFn);
     productsTable.grantReadData(lambdas.getProductFn);
     productsTable.grantReadWriteData(lambdas.updateCostFn);
+    productsTable.grantReadWriteData(lambdas.updateProductFn);
     configurationTable.grantReadData(lambdas.getProductsFn);
     configurationTable.grantReadData(lambdas.getProductFn);
     configurationTable.grantWriteData(lambdas.scraperFn);
@@ -68,6 +69,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
       getProductsFn: lambdas.getProductsFn,
       getProductFn: lambdas.getProductFn,
       updateCostFn: lambdas.updateCostFn,
+      updateProductFn: lambdas.updateProductFn,
       listProductsCriticsFn: lambdas.listProductsCriticsFn,
     });
   }
