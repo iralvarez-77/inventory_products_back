@@ -41,7 +41,7 @@ export class InventoryProductsBackStack extends cdk.Stack {
         billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
     });
 
-    const lambdas = new ProductsLambdasConstruct(this, 'ProductsLambdas', {
+    const lambdas = new ProductsLambdasConstruct(this, 'Products', {
       productsTable,
       configurationTable,
       estadoStockIndexName,
